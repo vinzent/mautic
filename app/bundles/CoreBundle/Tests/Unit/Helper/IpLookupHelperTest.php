@@ -34,6 +34,38 @@ class IpLookupHelperTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * @testdox Check that bots are marked not trackable
+     *
+     * @covers  \Mautic\CoreBundle\Helper\IpLookupHelper::getIpAddress
+     */
+    public function testBotIsNotTrackable(): void
+    {
+        $request = new Request([], [], [], [], [], ['REMOTE_ADDR' => '73.77.245.52']);
+        $request->headers->set('User-Agent', 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)');
+
+        $doNotTrackBots =  [
+            'googlebot',
+            'bingbot',
+            'msnbot',
+        ];
+
+        $mockCoreParametersHelper = $this
+            ->getMockBuilder(CoreParametersHelper::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $mockCoreParametersHelper->expects($this->any())
+            ->method('get')
+            ->willReturnCallback(
+                fn ($param, $defaultValue) => 'do_not_track_bots' === $param ? $doNotTrackBots : $defaultValue
+            );
+
+        $ip = $this->getIpHelper($request, $mockCoreParametersHelper)->getIpAddress();
+
+        $this->assertEquals('73.77.245.52', $ip->getIpAddress());
+        $this->assertFalse($ip->isTrackable());
+    }
+
+    /**
      * @testdox Check that the first IP is returned when the request is a proxy
      *
      * @covers  \Mautic\CoreBundle\Helper\IpLookupHelper::getIpAddress
