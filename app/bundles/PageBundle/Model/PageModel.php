@@ -376,6 +376,12 @@ class PageModel extends FormModel implements GlobalSearchInterface
             return;
         }
 
+        $ipAddress = $this->ipLookupHelper->getIpAddress();
+
+        if (!$ipAddress->isTrackable()) {
+            return;
+        }
+
         // Process the query
         if (empty($query) || !is_array($query)) {
             $query = $this->getHitQuery($request, $page);
@@ -413,7 +419,7 @@ class PageModel extends FormModel implements GlobalSearchInterface
 
         $hit = new Hit();
         $hit->setDateHit(new \DateTime());
-        $hit->setIpAddress($this->ipLookupHelper->getIpAddress());
+        $hit->setIpAddress($ipAddress);
 
         // Set info from request
         $hit->setQuery($query);
